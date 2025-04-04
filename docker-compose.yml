@@ -1,0 +1,16 @@
+services:
+  backend:
+    build: .
+    container_name: sceneplay_backend
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "${SCENEPLAY_SERVER_PORT}:8080"
+    environment:
+      # Core Variables
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
+      - RAZORPAY_CALLBACK_URL=${RAZORPAY_CALLBACK_URL}
+      - DEVELOPER_MODE=${DEVELOPER_MODE}
