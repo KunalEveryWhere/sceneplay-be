@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -22,17 +23,26 @@ func main() {
 	// Create a new Echo instance
 	e := echo.New()
 
-	// Middleware
-	e.Use(middleware.Logger())  // Logs requests
-	e.Use(middleware.Recover()) // Recovers from panics
-	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: config.AllowedOrigins,
-		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodOptions},
-		AllowHeaders: []string{"Content-Type", "Authorization"},
-	}))
+	allowedOrigins := config.AllowedOrigins
 
-	// Use custom middleware to enforce allowed origins
-	e.Use(utils.EnforceAllowedOrigins(config.AllowedOrigins))
+	// Remove wildcard allowance even in Developer Mode
+	if config.GetEnv("DEVELOPER_MODE", "disabled") == "enabled" {
+		allowedOrigins = []string{"*"} // Replace with specific allowed URLs
+		fmt.Println("Developer Mode Enabled")
+	}
+
+	// Middleware Setup
+	e.Use(
+		middleware.Logger(),  // Logs requests
+		middleware.Recover(), // Recovers from panics
+		middleware.CORSWithConfig(middleware.CORSConfig{
+			AllowOrigins:     allowedOrigins,
+			AllowMethods:     []string{http.MethodGet, http.MethodPost},
+			AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+			AllowCredentials: true,
+		}),
+		utils.EnforceAllowedOrigins(config.AllowedOrigins), // Use custom middleware to enforce allowed origins
+	)
 
 	// Setup Routes
 	routes.SetupRoutes(e)
